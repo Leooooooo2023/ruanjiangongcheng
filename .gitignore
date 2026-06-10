@@ -1,0 +1,32 @@
+# 编译输出
+property-server/target/
+**/target/
+
+# 依赖
+**/node_modules/
+**/.mvn/
+**/mvnw
+**/mvnw.cmd
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+
+# 环境配置（可选，如需保护密码则取消注释）
+# property-server/src/main/resources/application.yml
+
+# 临时文件
+GenPwd.java
+GenPwd.class
