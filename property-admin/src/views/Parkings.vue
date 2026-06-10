@@ -1,13 +1,31 @@
 <template>
   <div>
-    <el-card>
-      <template #header>
-        <div style="display: flex; justify-content: space-between; align-items: center">
-          <span>停车位管理</span>
-          <el-button type="primary" @click="handleAdd">新增车位</el-button>
-        </div>
-      </template>
-      <el-table :data="tableData" border stripe>
+    <!-- 模式切换 -->
+    <el-card style="margin-bottom: 15px">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <el-radio-group v-model="viewMode" size="default">
+          <el-radio-button value="map">🅿️ 地图模式</el-radio-button>
+          <el-radio-button value="table">📋 表格模式</el-radio-button>
+          <el-radio-button value="applications">📝 申请审核
+            <el-badge :value="pendingCount" :hidden="pendingCount === 0" style="margin-left: 4px" />
+          </el-radio-button>
+        </el-radio-group>
+        <el-button v-if="viewMode !== 'applications'" type="primary" @click="handleAdd">新增车位</el-button>
+      </div>
+    </el-card>
+
+    <!-- 地图视图 -->
+    <div v-if="viewMode === 'map'" v-loading="loading">
+      <ParkingMap
+        :spots="allSpots"
+        :applications="applicationList"
+        @spot-click="handleSpotClick"
+      />
+    </div>
+
+    <!-- 表格视图 -->
+    <el-card v-if="viewMode === 'table'">
+      <el-table :data="tableData" border stripe v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="number" label="车位号" />
         <el-table-column prop="location" label="位置" />
@@ -48,6 +66,105 @@
         layout="total, prev, pager, next"
       />
     </el-card>
+
+    <!-- 申请审核视图 -->
+    <el-card v-if="viewMode === 'applications'" v-loading="appLoading">
+      <template #header>
+        <span>车位申请审核</span>
+      </template>
+      <el-table :data="applicationList" border stripe>
+        <el-table-column prop="id" label="申请ID" width="80" />
+        <el-table-column prop="parkingNumber" label="车位号" width="100" />
+        <el-table-column prop="parkingLocation" label="车位位置" width="120" />
+        <el-table-column prop="ownerName" label="申请人" width="100" />
+        <el-table-column prop="ownerUsername" label="申请人账号" width="120" />
+        <el-table-column prop="createTime" label="申请时间" width="170" />
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="scope">
+            <el-tag v-if="scope.row.status === 0" type="warning">待审核</el-tag>
+            <el-tag v-else-if="scope.row.status === 1" type="success">已通过</el-tag>
+            <el-tag v-else type="danger">已拒绝</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="scope">
+            <template v-if="scope.row.status === 0">
+              <el-button size="small" type="success" @click="handleApprove(scope.row)">通过</el-button>
+              <el-button size="small" type="danger" @click="handleReject(scope.row)">拒绝</el-button>
+            </template>
+            <span v-else style="color: #999">—</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
+    <!-- 车位详情弹窗（地图模式点击） -->
+    <el-dialog v-model="spotDialogVisible" title="车位详情" width="480px">
+      <template v-if="selectedSpot">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="车位号">{{ selectedSpot.number }}</el-descriptions-item>
+          <el-descriptions-item label="位置">{{ selectedSpot.location }}</el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag v-if="selectedSpot.status === 0 && !selectedApplication" type="success">空闲</el-tag>
+            <el-tag v-else-if="selectedSpot.status === 1" type="danger">已占用</el-tag>
+            <el-tag v-else-if="selectedApplication && selectedApplication.status === 0" type="warning">申请中</el-tag>
+            <el-tag v-else type="success">空闲</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="业主账号">
+            {{ selectedSpot.ownerUsername || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="业主姓名">
+            {{ selectedSpot.ownerName || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="租期">
+            <template v-if="selectedSpot.startDate">
+              {{ selectedSpot.startDate }} ~ {{ selectedSpot.endDate }}
+            </template>
+            <template v-else>-</template>
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <!-- 申请中：显示申请信息 -->
+        <template v-if="selectedApplication && selectedApplication.status === 0">
+          <el-divider />
+          <el-alert type="warning" :closable="false" show-icon>
+            <template #title>
+              {{ selectedApplication.ownerName }}（{{ selectedApplication.ownerUsername }}）申请该车位
+            </template>
+            <p style="margin: 8px 0 0; font-size: 12px; color: #999">
+              申请时间：{{ selectedApplication.createTime }}
+            </p>
+          </el-alert>
+        </template>
+
+        <!-- 已占用：显示当前业主信息 -->
+        <template v-if="selectedSpot.status === 1 && selectedSpot.ownerId">
+          <el-divider />
+          <el-alert type="info" :closable="false" show-icon>
+            <template #title>
+              当前归属：{{ selectedSpot.ownerName }}（{{ selectedSpot.ownerUsername }}）
+            </template>
+          </el-alert>
+        </template>
+      </template>
+
+      <template #footer>
+        <!-- 空闲：可分配 -->
+        <template v-if="selectedSpot && selectedSpot.status === 0 && !selectedApplication">
+          <el-button type="primary" @click="spotDialogVisible = false; handleAssign(selectedSpot)">分配车位</el-button>
+        </template>
+        <!-- 申请中：审核按钮 -->
+        <template v-if="selectedApplication && selectedApplication.status === 0">
+          <el-button type="success" @click="handleApprove(selectedApplication); spotDialogVisible = false">通过申请</el-button>
+          <el-button type="danger" @click="handleReject(selectedApplication); spotDialogVisible = false">拒绝申请</el-button>
+        </template>
+        <!-- 已占用：收回 -->
+        <template v-if="selectedSpot && selectedSpot.status === 1">
+          <el-button type="warning" @click="spotDialogVisible = false; handleRevoke(selectedSpot)">收回车位</el-button>
+        </template>
+        <el-button @click="spotDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 新增/编辑 -->
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑车位' : '新增车位'" width="500px">
@@ -106,19 +223,32 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { getParkings, addParking, updateParking, deleteParking, assignParking, revokeParking } from '../api/parking'
+import { ref, reactive, onMounted, computed } from 'vue'
+import {
+  getParkings, addParking, updateParking, deleteParking,
+  assignParking, revokeParking,
+  getParkingApplications, approveApplication, rejectApplication
+} from '../api/parking'
 import request from '../utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import ParkingMap from '../components/ParkingMap.vue'
 
+const viewMode = ref('map')
+const loading = ref(false)
+const appLoading = ref(false)
 const tableData = ref([])
 const total = ref(0)
+const allSpots = ref([])
+const applicationList = ref([])
 const dialogVisible = ref(false)
+const spotDialogVisible = ref(false)
 const assignVisible = ref(false)
 const isEdit = ref(false)
 const formRef = ref()
 const ownerLoading = ref(false)
 const ownerOptions = ref([])
+const selectedSpot = ref(null)
+const selectedApplication = ref(null)
 
 const query = reactive({ page: 1, size: 10, keyword: '' })
 const form = reactive({ id: null, number: '', location: '' })
@@ -128,11 +258,66 @@ const rules = {
   location: [{ required: true, message: '请输入位置', trigger: 'blur' }]
 }
 
+const pendingCount = computed(() => {
+  return applicationList.value.filter(a => a.status === 0).length
+})
+
+// ====== 数据加载 ======
+
 const loadData = async () => {
-  const res = await getParkings(query)
-  tableData.value = res.data.list
-  total.value = res.data.total
+  loading.value = true
+  try {
+    const res = await getParkings(query)
+    tableData.value = res.data.list
+    total.value = res.data.total
+  } catch (e) { /* ignore */ }
+  loading.value = false
 }
+
+const loadAllSpots = async () => {
+  try {
+    const res = await getParkings({ page: 1, size: 100 })
+    allSpots.value = res.data.list || []
+  } catch (e) { /* ignore */ }
+}
+
+const loadApplications = async () => {
+  appLoading.value = true
+  try {
+    const res = await getParkingApplications()
+    applicationList.value = res.data || []
+  } catch (e) { /* ignore */ }
+  appLoading.value = false
+}
+
+// ====== 地图交互 ======
+
+const handleSpotClick = ({ spot, application }) => {
+  selectedSpot.value = spot
+  selectedApplication.value = application
+  spotDialogVisible.value = true
+}
+
+// ====== 申请审核 ======
+
+const handleApprove = async (row) => {
+  await ElMessageBox.confirm(`确定通过 ${row.ownerName} 对车位 ${row.parkingNumber} 的申请？`, '审核通过', { type: 'warning' })
+  await approveApplication(row.id)
+  ElMessage.success('审核通过，车位已分配')
+  loadAllSpots()
+  loadApplications()
+  loadData()
+}
+
+const handleReject = async (row) => {
+  await ElMessageBox.confirm(`确定拒绝 ${row.ownerName} 对车位 ${row.parkingNumber} 的申请？`, '审核拒绝', { type: 'warning' })
+  await rejectApplication(row.id)
+  ElMessage.success('已拒绝')
+  loadAllSpots()
+  loadApplications()
+}
+
+// ====== 搜索业主 ======
 
 const searchOwners = async (keyword) => {
   if (!keyword) {
@@ -143,13 +328,14 @@ const searchOwners = async (keyword) => {
   try {
     const res = await request.get('/api/owners/all')
     const list = res.data || []
-    // 前端过滤：姓名或账号匹配
     ownerOptions.value = list.filter(o =>
       o.name.includes(keyword) || o.username.includes(keyword)
     )
   } catch (e) { /* ignore */ }
   ownerLoading.value = false
 }
+
+// ====== 表格操作 ======
 
 const handleAdd = () => {
   isEdit.value = false
@@ -168,6 +354,7 @@ const handleDelete = async (row) => {
   await deleteParking(row.id)
   ElMessage.success('删除成功')
   loadData()
+  loadAllSpots()
 }
 
 const handleAssign = (row) => {
@@ -184,6 +371,7 @@ const handleRevoke = async (row) => {
   await revokeParking(row.id)
   ElMessage.success('收回成功')
   loadData()
+  loadAllSpots()
 }
 
 const submitForm = async () => {
@@ -197,6 +385,7 @@ const submitForm = async () => {
   }
   dialogVisible.value = false
   loadData()
+  loadAllSpots()
 }
 
 const submitAssign = async () => {
@@ -208,7 +397,14 @@ const submitAssign = async () => {
   ElMessage.success('分配成功')
   assignVisible.value = false
   loadData()
+  loadAllSpots()
 }
 
-onMounted(loadData)
+// ====== 初始化 ======
+
+onMounted(() => {
+  loadData()
+  loadAllSpots()
+  loadApplications()
+})
 </script>

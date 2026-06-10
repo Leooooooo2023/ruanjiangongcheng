@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS `admin` (
     `name` VARCHAR(50) NOT NULL,
     `phone` VARCHAR(20),
     `email` VARCHAR(100),
+    `login_fail_count` INT DEFAULT 0 COMMENT '登录失败次数',
+    `lock_until` DATETIME NULL COMMENT '锁定截止时间',
     `is_deleted` TINYINT NOT NULL DEFAULT 0,
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='管理员表';
@@ -38,6 +40,8 @@ CREATE TABLE IF NOT EXISTS `owner` (
     `building_id` INT,
     `unit` VARCHAR(10),
     `room` VARCHAR(10),
+    `login_fail_count` INT DEFAULT 0 COMMENT '登录失败次数',
+    `lock_until` DATETIME NULL COMMENT '锁定截止时间',
     `is_deleted` TINYINT NOT NULL DEFAULT 0,
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`building_id`) REFERENCES `building`(`id`)
@@ -66,6 +70,18 @@ CREATE TABLE IF NOT EXISTS `parking` (
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`owner_id`) REFERENCES `owner`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='停车位表';
+
+-- 停车位申请表
+CREATE TABLE IF NOT EXISTS `parking_application` (
+    `id` INT PRIMARY KEY AUTO_INCREMENT,
+    `parking_id` INT NOT NULL,
+    `owner_id` INT NOT NULL,
+    `status` TINYINT NOT NULL DEFAULT 0 COMMENT '0待审核/1通过/2拒绝',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`parking_id`) REFERENCES `parking`(`id`),
+    FOREIGN KEY (`owner_id`) REFERENCES `owner`(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='停车位申请表';
 
 -- 报修表
 CREATE TABLE IF NOT EXISTS `repair` (

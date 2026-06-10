@@ -1,5 +1,7 @@
 import request from '../utils/request'
 
+// ====== 停车位管理 ======
+
 export function getParkings(params) {
   return request.get('/api/parkings', { params })
 }
@@ -26,4 +28,27 @@ export function assignParking(id, data) {
 
 export function revokeParking(id) {
   return request.put(`/api/parkings/${id}/revoke`)
+}
+
+// ====== 停车位申请（管理员） ======
+
+/**
+ * 获取所有申请列表
+ */
+export function getParkingApplications() {
+  return request.get('/api/parking-applications')
+}
+
+/**
+ * 审核通过
+ */
+export function approveApplication(id) {
+  return request.put(`/api/parking-applications/${id}/approve`)
+}
+
+/**
+ * 审核拒绝
+ */
+export function rejectApplication(id) {
+  return request.put(`/api/parking-applications/${id}/reject`)
 }

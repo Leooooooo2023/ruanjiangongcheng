@@ -1,8 +1,8 @@
 <template>
-  <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)">
-    <el-card style="width: 460px; border-radius: 10px">
+  <div class="auth-page">
+    <el-card class="auth-card register-card">
       <template #header>
-        <h2 style="text-align: center; margin: 0">业主注册</h2>
+        <h2 class="auth-title">业主注册</h2>
       </template>
       <el-form :model="form" :rules="rules" ref="formRef" label-width="80px">
         <el-form-item label="用户名" prop="username">
@@ -126,3 +126,34 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(64, 158, 255, 0.12), transparent 32%),
+    linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+}
+
+.auth-card {
+  width: min(460px, 100%);
+  border-radius: 8px;
+  box-shadow: 0 20px 50px rgba(31, 45, 61, 0.14);
+}
+
+.register-card {
+  margin: 20px 0;
+}
+
+.auth-title {
+  text-align: center;
+  margin: 0;
+  color: var(--ink);
+  font-size: 21px;
+  font-weight: 800;
+}
+</style>

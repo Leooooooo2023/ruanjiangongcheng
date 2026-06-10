@@ -1,8 +1,8 @@
 <template>
-  <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
-    <el-card style="width: 400px; border-radius: 10px">
+  <div class="login-page">
+    <el-card class="login-card">
       <template #header>
-        <h2 style="text-align: center; margin: 0">物业管理系统 - 管理员登录</h2>
+        <h2 class="login-title">物业管理系统 - 管理员登录</h2>
       </template>
       <el-form :model="form" :rules="rules" ref="formRef" label-width="0">
         <el-form-item prop="username">
@@ -12,9 +12,9 @@
           <el-input v-model="form.password" prefix-icon="Lock" placeholder="请输入密码" type="password" show-password @keyup.enter="handleLogin" />
         </el-form-item>
         <el-form-item prop="captchaCode">
-          <div style="display: flex; gap: 10px">
+          <div class="captcha-row">
             <el-input v-model="form.captchaCode" placeholder="请输入验证码" style="flex: 1" @keyup.enter="handleLogin" />
-            <img :src="captchaImage" alt="验证码" title="点击刷新" @click="refreshCaptcha" style="height: 40px; cursor: pointer; border-radius: 4px" />
+            <img :src="captchaImage" alt="验证码" title="点击刷新" @click="refreshCaptcha" class="captcha-image" />
           </div>
         </el-form-item>
         <el-form-item>
@@ -75,6 +75,7 @@ const handleLogin = async () => {
     router.push(redirect)
   } finally {
     loading.value = false
+    refreshCaptcha()
   }
 }
 
@@ -82,3 +83,49 @@ onMounted(() => {
   refreshCaptcha()
 })
 </script>
+
+<style scoped>
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(64, 158, 255, 0.12), transparent 32%),
+    linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+}
+
+.login-card {
+  width: min(400px, 100%);
+  border-radius: 8px;
+  box-shadow: 0 20px 50px rgba(31, 45, 61, 0.14);
+}
+
+.login-title {
+  text-align: center;
+  margin: 0;
+  color: var(--ink);
+  font-size: 21px;
+  font-weight: 800;
+}
+
+.captcha-row {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+}
+
+.captcha-image {
+  height: 40px;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.captcha-image:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(31, 45, 61, 0.12);
+}
+</style>

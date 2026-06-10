@@ -1,10 +1,10 @@
 <template>
-  <div style="min-height: 100vh; display: flex; flex-direction: column">
+  <div class="portal-shell">
     <!-- 顶部导航 -->
-    <el-header style="background: #409EFF; display: flex; align-items: center; justify-content: space-between; padding: 0 20px">
-      <span style="color: #fff; font-size: 20px; font-weight: bold">小区物业 - 业主端</span>
+    <el-header class="portal-header">
+      <span class="portal-brand">小区物业 - 业主端</span>
       <el-dropdown @command="handleCommand">
-        <span style="cursor: pointer; color: #fff; display: flex; align-items: center">
+        <span class="portal-user">
           <el-icon style="margin-right: 5px"><UserFilled /></el-icon>
           {{ userStore.user?.name || '业主' }}
           <el-icon style="margin-left: 5px"><ArrowDown /></el-icon>
@@ -19,17 +19,19 @@
     </el-header>
 
     <!-- 内容区 -->
-    <el-main style="flex: 1; max-width: 800px; margin: 0 auto; width: 100%; padding: 20px">
+    <el-main class="portal-main">
       <router-view />
     </el-main>
 
     <!-- 底部导航（移动端） -->
-    <div style="display: flex; background: #fff; border-top: 1px solid #e6e6e6; padding: 8px 0">
+    <div class="portal-tabs">
       <div v-for="item in navItems" :key="item.path"
+        class="portal-tab"
+        :class="{ active: $route.path === item.path }"
         @click="$router.push(item.path)"
-        :style="{ flex: 1, textAlign: 'center', cursor: 'pointer', color: $route.path === item.path ? '#409EFF' : '#666' }">
+      >
         <el-icon :size="22"><component :is="item.icon" /></el-icon>
-        <div style="font-size: 12px; margin-top: 2px">{{ item.label }}</div>
+        <div class="portal-tab-label">{{ item.label }}</div>
       </div>
     </div>
   </div>
@@ -63,3 +65,91 @@ const handleCommand = async (command) => {
   }
 }
 </script>
+
+<style scoped>
+.portal-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--page);
+}
+
+.portal-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  background: var(--brand);
+  box-shadow: 0 10px 26px rgba(64, 158, 255, 0.22);
+}
+
+.portal-brand {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.portal-user {
+  cursor: pointer;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.portal-user:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.portal-main {
+  flex: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 24px;
+}
+
+.portal-tabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid var(--line);
+  padding: 8px 10px;
+  box-shadow: 0 -10px 24px rgba(31, 45, 61, 0.06);
+}
+
+.portal-tab {
+  flex: 1;
+  min-height: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  border-radius: 8px;
+  transition: color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+}
+
+.portal-tab:hover {
+  color: var(--brand);
+  background: var(--brand-soft);
+  transform: translateY(-1px);
+}
+
+.portal-tab.active {
+  color: var(--brand);
+  background: var(--brand-soft);
+  font-weight: 700;
+}
+
+.portal-tab-label {
+  font-size: 12px;
+  margin-top: 2px;
+}
+</style>

@@ -29,6 +29,7 @@ public class RoleInterceptor implements HandlerInterceptor {
             }
         } else if (uri.startsWith("/api/buildings") || uri.startsWith("/api/employees")
                 || uri.startsWith("/api/owners") || uri.startsWith("/api/parkings")
+                || uri.startsWith("/api/parking-applications")
                 || uri.startsWith("/api/repairs") || uri.startsWith("/api/complaints")) {
             if (role == null || role != 0) {
                 writeError(response, 403, "无权访问管理员功能");
