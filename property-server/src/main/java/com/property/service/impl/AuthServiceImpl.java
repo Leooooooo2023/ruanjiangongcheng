@@ -196,7 +196,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public Owner getOwnerInfo(Integer ownerId) {
-        Owner owner = ownerMapper.selectById(ownerId);
+        Owner owner = ownerMapper.selectOwnerDetailWithBuildingName(ownerId);
         if (owner == null) {
             throw new BusinessException("用户不存在");
         }

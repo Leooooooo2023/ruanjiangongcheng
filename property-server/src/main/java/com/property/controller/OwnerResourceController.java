@@ -3,6 +3,7 @@ package com.property.controller;
 import com.property.dto.PageQuery;
 import com.property.dto.PageResult;
 import com.property.dto.ParkingApplicationDTO;
+import com.property.dto.ProfileDTO;
 import com.property.dto.Result;
 import com.property.entity.Building;
 import com.property.entity.Owner;
@@ -13,6 +14,7 @@ import com.property.service.OwnerService;
 import com.property.service.ParkingApplicationService;
 import com.property.service.ParkingService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -135,5 +137,15 @@ public class OwnerResourceController {
     public Result<List<ParkingApplication>> myApplications(HttpServletRequest request) {
         Integer ownerId = (Integer) request.getAttribute("userId");
         return Result.success(parkingApplicationService.listByOwner(ownerId));
+    }
+
+    /**
+     * 业主修改个人信息（姓名、手机号、邮箱）
+     */
+    @PutMapping("/profile")
+    public Result<Void> updateProfile(@Validated @RequestBody ProfileDTO dto, HttpServletRequest request) {
+        Integer ownerId = (Integer) request.getAttribute("userId");
+        ownerService.updateProfile(ownerId, dto);
+        return Result.success("保存成功", null);
     }
 }

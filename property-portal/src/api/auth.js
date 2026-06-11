@@ -29,3 +29,8 @@ export function updatePassword(data) {
 export function getUserInfo() {
   return request.get('/api/auth/info')
 }
+
+// 修改个人信息
+export function updateProfile(data) {
+  return request.put('/api/owner/profile', data)
+}

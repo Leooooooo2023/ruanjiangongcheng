@@ -6,6 +6,7 @@ import com.property.dto.PageQuery;
 import com.property.dto.PageResult;
 import com.property.entity.Owner;
 
+import com.property.dto.ProfileDTO;
 import java.util.List;
 
 public interface OwnerService extends IService<Owner> {
@@ -26,7 +27,7 @@ public interface OwnerService extends IService<Owner> {
     List<Owner> getAllOwners();
 
     /**
-     * 业主修改个人信息
+     * 业主修改个人信息（姓名、手机号、邮箱）
      */
-    void updateProfile(Integer ownerId, OwnerDTO dto);
+    void updateProfile(Integer ownerId, ProfileDTO dto);
 }

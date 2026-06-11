@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.property.dao.OwnerMapper;
 import com.property.dto.OwnerDTO;
+import com.property.dto.ProfileDTO;
 import com.property.dto.PageQuery;
 import com.property.dto.PageResult;
 import com.property.entity.Owner;
@@ -131,7 +132,7 @@ public class OwnerServiceImpl extends ServiceImpl<OwnerMapper, Owner> implements
     }
 
     @Override
-    public void updateProfile(Integer ownerId, OwnerDTO dto) {
+    public void updateProfile(Integer ownerId, ProfileDTO dto) {
         Owner owner = this.getById(ownerId);
         if (owner == null) {
             throw new BusinessException("业主不存在");

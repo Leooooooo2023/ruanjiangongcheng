@@ -3,6 +3,7 @@
     <h3 style="margin-bottom: 15px">个人信息</h3>
 
     <el-card style="margin-bottom: 20px">
+      <template #header>基本信息</template>
       <el-form :model="form" label-width="80px">
         <el-form-item label="用户名">
           <el-input :value="userStore.user?.username" disabled />
@@ -16,11 +17,36 @@
         <el-form-item label="邮箱">
           <el-input v-model="form.email" />
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSave">保存</el-button>
+      </el-form>
+    </el-card>
+
+    <el-card style="margin-bottom: 20px">
+      <template #header>住房信息</template>
+      <el-form label-width="80px">
+        <el-form-item label="楼栋">
+          <el-input :value="form.buildingName" disabled />
+        </el-form-item>
+        <el-form-item label="单元">
+          <el-input :value="form.unit" disabled />
+        </el-form-item>
+        <el-form-item label="房号">
+          <el-input :value="form.room" disabled />
         </el-form-item>
       </el-form>
     </el-card>
+
+    <el-card style="margin-bottom: 20px">
+      <template #header>账户信息</template>
+      <el-form label-width="80px">
+        <el-form-item label="注册时间">
+          <el-input :value="form.createTime" disabled />
+        </el-form-item>
+      </el-form>
+    </el-card>
+
+    <div style="display: flex; gap: 10px; margin-bottom: 20px">
+      <el-button type="primary" :loading="saving" @click="handleSave">保存个人信息</el-button>
+    </div>
 
     <el-card>
       <template #header>修改密码</template>
@@ -42,37 +68,71 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useUserStore } from '../store/user'
-import { getUserInfo, updatePassword } from '../api/auth'
+import { getUserInfo, updatePassword, updateProfile } from '../api/auth'
 import { ElMessage } from 'element-plus'
 
 const userStore = useUserStore()
 const pwdFormRef = ref()
+const saving = ref(false)
 
-const form = reactive({ name: '', phone: '', email: '' })
+const form = reactive({
+  name: '',
+  phone: '',
+  email: '',
+  buildingName: '',
+  unit: '',
+  room: '',
+  createTime: ''
+})
+
 const pwdForm = reactive({ oldPassword: '', newPassword: '' })
 const pwdRules = {
   oldPassword: [{ required: true, message: '请输入原密码', trigger: 'blur' }],
   newPassword: [{ required: true, message: '请输入新密码', trigger: 'blur' }]
 }
 
-onMounted(async () => {
+const loadUserInfo = async () => {
   try {
     const res = await getUserInfo()
-    form.name = res.data.name || ''
-    form.phone = res.data.phone || ''
-    form.email = res.data.email || ''
+    const data = res.data
+    form.name = data.name || ''
+    form.phone = data.phone || ''
+    form.email = data.email || ''
+    form.buildingName = data.buildingName || '未分配'
+    form.unit = data.unit || '未知'
+    form.room = data.room || '未知'
+    form.createTime = data.createTime || ''
   } catch (e) { /* ignore */ }
+}
+
+onMounted(() => {
+  loadUserInfo()
 })
 
-const handleSave = () => {
-  ElMessage.success('保存成功')
+const handleSave = async () => {
+  saving.value = true
+  try {
+    await updateProfile({
+      name: form.name,
+      phone: form.phone,
+      email: form.email
+    })
+    ElMessage.success('保存成功')
+  } catch (e) { /* error handled by interceptor */ }
+  finally { saving.value = false }
 }
 
 const handleChangePassword = async () => {
-  await pwdFormRef.value.validate()
-  await updatePassword(pwdForm)
-  ElMessage.success('密码修改成功，请重新登录')
-  userStore.setLogout()
-  window.location.href = '/login'
+  try {
+    await pwdFormRef.value.validate()
+  } catch {
+    return
+  }
+  try {
+    await updatePassword(pwdForm)
+    ElMessage.success('密码修改成功，请重新登录')
+    userStore.setLogout()
+    window.location.href = '/login'
+  } catch (e) { /* error handled by interceptor */ }
 }
 </script>
